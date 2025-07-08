@@ -79,7 +79,7 @@ public class BufferedReadChannelTest {
             assertArrayEquals("The quick ".getBytes(), readBytes);
         }
     }
-    
+
 
     /**
      * Verifica che una lettura parziale a partire da una posizione specifica restituisca i dati corretti.

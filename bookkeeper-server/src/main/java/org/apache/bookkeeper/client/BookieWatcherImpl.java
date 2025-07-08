@@ -64,7 +64,7 @@ import org.apache.bookkeeper.stats.annotations.StatsDoc;
     help = "Bookie watcher related stats"
 )
 @Slf4j
-class BookieWatcherImpl implements BookieWatcher {
+public class BookieWatcherImpl implements BookieWatcher {
 
     private static final Function<Throwable, BKException> EXCEPTION_FUNC = cause -> {
         if (cause instanceof BKException) {
@@ -134,6 +134,21 @@ class BookieWatcherImpl implements BookieWatcher {
         this.replaceBookieTimer = statsLogger.getOpStatsLogger(REPLACE_BOOKIE_TIME);
         this.ensembleNotAdheringToPlacementPolicy = statsLogger
                 .getCounter(BookKeeperServerStats.ENSEMBLE_NOT_ADHERING_TO_PLACEMENT_POLICY_COUNT);
+    }
+
+    /**
+     * Dummy constructor for testing purposes only (e.g., for tools like Randoop).
+     * Do NOT use in production.
+     */
+    public BookieWatcherImpl() {
+        this.conf = null;
+        this.placementPolicy = null;
+        this.registrationClient = null;
+        this.bookieAddressResolver = null;
+        this.quarantinedBookies = CacheBuilder.newBuilder().build();
+        this.newEnsembleTimer = null;
+        this.replaceBookieTimer = null;
+        this.ensembleNotAdheringToPlacementPolicy = null;
     }
 
     @Override
