@@ -1,5 +1,6 @@
-package org.apache.bookkeeper.bookie;
+package randoop;
 
+import org.apache.bookkeeper.bookie.BufferedReadChannel;
 import org.junit.jupiter.api.*;
 import java.nio.file.*;
 import java.nio.channels.FileChannel;
@@ -196,6 +197,39 @@ public class BufferedReadChannelTest {
             assertEquals(-1, bytesRead);
         } finally {
             Files.deleteIfExists(emptyFile);
+        }
+    }
+
+    /**
+     * Verifica il metodo size() in condizioni sealed/non-sealed e mutazioni condizionali.
+     */
+    @Test
+    public void testSizeMethodBehavior() throws IOException {
+        try (FileChannel fileChannel = FileChannel.open(tempFile, StandardOpenOption.READ)) {
+            BufferedReadChannel bufferedChannel = new BufferedReadChannel(fileChannel, 16);
+
+            // Verifica comportamento quando non è sealed
+            long sizeUnsealed = bufferedChannel.size();
+            assertEquals(testData.length, sizeUnsealed);
+
+            // Simula sealed via reflection per testare ramo alternativo
+            java.lang.reflect.Field sealedField = BufferedReadChannel.class.getDeclaredField("sealed");
+            sealedField.setAccessible(true);
+            sealedField.setBoolean(bufferedChannel, true);
+
+            // Reset fileSize to -1 to force conditional branch
+            java.lang.reflect.Field fileSizeField = BufferedReadChannel.class.getDeclaredField("fileSize");
+            fileSizeField.setAccessible(true);
+            fileSizeField.setLong(bufferedChannel, -1);
+
+            long sizeSealed = bufferedChannel.size();
+            assertEquals(testData.length, sizeSealed);
+
+            // Verifica che il fileSize venga memorizzato e riutilizzato (nessuna nuova lettura)
+            long sizeAgain = bufferedChannel.size();
+            assertEquals(sizeSealed, sizeAgain);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            fail("Reflection setup failed: " + e.getMessage());
         }
     }
 

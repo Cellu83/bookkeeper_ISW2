@@ -1,7 +1,8 @@
-package org.apache.bookkeeper.bookie;
+package randoop;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import org.apache.bookkeeper.bookie.BufferedReadChannel;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -45,6 +46,53 @@ public class BufferedReadChannelLLMTest {
         try (FileChannel fileChannel = FileChannel.open(tempFile, StandardOpenOption.READ)) {
             BufferedReadChannel bufferedChannel = new BufferedReadChannel(fileChannel, 16);
             assertEquals(fileChannel.size(), bufferedChannel.size());
+        }
+        Files.deleteIfExists(tempFile);
+    }
+
+    // Verifica l'incremento di invocationCount dopo una chiamata a read()
+    @Test
+    public void testInvocationCountIncrement() throws IOException {
+        Path tempFile = Paths.get("testfile.dat");
+        Files.write(tempFile, "1234567890".getBytes(StandardCharsets.UTF_8));
+        try (FileChannel fileChannel = FileChannel.open(tempFile, StandardOpenOption.READ)) {
+            BufferedReadChannel bufferedChannel = new BufferedReadChannel(fileChannel, 8);
+            long before = bufferedChannel.invocationCount;
+            ByteBuf dest = Unpooled.buffer(5);
+            bufferedChannel.read(dest, 0);
+            long after = bufferedChannel.invocationCount;
+            assertEquals(before + 1, after);
+        }
+        Files.deleteIfExists(tempFile);
+    }
+
+    // Verifica l'incremento di cacheHitCount se si legge due volte la stessa area del file
+    @Test
+    public void testCacheHitCountIncrement() throws IOException {
+        Path tempFile = Paths.get("testfile.dat");
+        Files.write(tempFile, "abcdefghij".getBytes(StandardCharsets.UTF_8));
+        try (FileChannel fileChannel = FileChannel.open(tempFile, StandardOpenOption.READ)) {
+            BufferedReadChannel bufferedChannel = new BufferedReadChannel(fileChannel, 10);
+            ByteBuf dest1 = Unpooled.buffer(5);
+            bufferedChannel.read(dest1, 0); // prima lettura
+            long hitsBefore = bufferedChannel.cacheHitCount;
+            ByteBuf dest2 = Unpooled.buffer(5);
+            bufferedChannel.read(dest2, 0); // seconda lettura nella stessa posizione
+            long hitsAfter = bufferedChannel.cacheHitCount;
+            assertEquals(hitsBefore + 1, hitsAfter);
+        }
+        Files.deleteIfExists(tempFile);
+    }
+
+    // Verifica il ramo sealed == true nel metodo size(), coprendo il caso con inizializzazione lazy di fileSize
+    @Test
+    public void testSizeSealedWithLazyInit() throws IOException {
+        Path tempFile = Paths.get("testfile.dat");
+        Files.write(tempFile, "1234567890".getBytes(StandardCharsets.UTF_8));
+        try (FileChannel fileChannel = FileChannel.open(tempFile, StandardOpenOption.READ)) {
+            BufferedReadChannel bufferedChannel = new BufferedReadChannel(fileChannel, 8, true);
+            long size = bufferedChannel.size();
+            assertEquals(fileChannel.size(), size);
         }
         Files.deleteIfExists(tempFile);
     }

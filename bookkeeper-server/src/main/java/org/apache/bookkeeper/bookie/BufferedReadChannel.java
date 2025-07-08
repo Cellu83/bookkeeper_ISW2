@@ -41,8 +41,8 @@ public class BufferedReadChannel extends BufferedChannelBase {
     // The starting position of the data currently in the read buffer.
     protected long readBufferStartPosition = Long.MIN_VALUE;
 
-    long invocationCount = 0;
-    long cacheHitCount = 0;
+    public long invocationCount = 0;
+    public long cacheHitCount = 0;
     private volatile long fileSize = -1;
     final boolean sealed;
 

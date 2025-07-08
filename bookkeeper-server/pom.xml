@@ -237,6 +237,13 @@
       <artifactId>awaitility</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- JUnit 5 support for PIT -->
+    <dependency>
+      <groupId>org.pitest</groupId>
+      <artifactId>pitest-junit5-plugin</artifactId>
+      <version>1.1.2</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
@@ -339,6 +346,30 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.pitest</groupId>
+        <artifactId>pitest-maven</artifactId>
+        <version>1.15.0</version>
+        <configuration>
+          <targetClasses>
+            <param>org.apache.bookkeeper.bookie.BufferedReadChannel</param>
+          </targetClasses>
+          <targetTests>
+            <param>randoop.*</param>
+            <param>randoop.RegressionTest*</param>
+          </targetTests>
+          <threads>4</threads>
+          <mutators>
+            <mutator>ALL</mutator>
+          </mutators>
+          <outputFormats>
+            <param>HTML</param>
+          </outputFormats>
+          <pluginConfiguration>
+            <testPlugin>junit5</testPlugin>
+          </pluginConfiguration>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
   <profiles>
@@ -397,4 +428,10 @@
       </build>
     </profile>
   </profiles>
+  <!-- Java version properties for Maven compiler -->
+  <properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.release>17</maven.compiler.release>
+  </properties>
 </project>
